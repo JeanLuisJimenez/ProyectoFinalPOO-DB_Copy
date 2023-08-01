@@ -63,7 +63,7 @@ public class BolsaTrabajo implements Serializable {
 	public Empresa getEmpresa(String nombreEmpresa) {
 		try {
 			Statement st = SQLConnection.sqlConnection.createStatement();
-			ResultSet result = st.executeQuery("SELECT *FROM Users WHERE nombreEmpresa='" + nombreEmpresa +"'");
+			ResultSet result = st.executeQuery("SELECT *FROM Users WHERE NombreComercial='" + nombreEmpresa +"'");
 
 			if (result.next()) {
 				return new Empresa(result.getString("RNC"), result.getString("NombreComercial"), result.getString("RazonSocial"), 
@@ -84,24 +84,47 @@ public class BolsaTrabajo implements Serializable {
 	public void agregarEmpresa(Empresa empresa) throws SQLException {
 		if (empresa != null && !getEmpresas(empresa.getNombreComercial()).next()) {
 			try {
-				String sql = " insert into Empresa (RNC, NombreComercial, RazonSocial, Sector, CargoContacto, Tipo, Rubro, NombreContacto, TelefonoContacto, EmailContacto, Ubicacion_id)"
-						+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-				PreparedStatement st = SQLConnection.sqlConnection.prepareStatement(sql);
-				st.setString(1, empresa.getRNC());
-				st.setString(2, empresa.getNombreComercial());
-				st.setString(3, empresa.getRazonSocial());
-				st.setString(4, empresa.getSector());
-				st.setString(5, empresa.getCargoContacto());
-				st.setString(6, empresa.getTipo());
-				st.setString(7, empresa.getRubro());
-				st.setString(8, empresa.getNombreContacto());
-				st.setString(9, empresa.getTelefonoContacto());
-				st.setString(10, empresa.getEmailContacto());
-				//st.setInt(11, empresa.getUbicacion());
 
-				st.execute();
+				if (empresa != null && !getPersonalByID(empresa.getRNC()).next()) {
+					String sqlUbicacion = "INSERT INTO Ubicacion (Pais, Estado_Provincia, Ciudad, Direccion) VALUES (?,?,?,?)";
+					PreparedStatement stUb = SQLConnection.sqlConnection.prepareStatement(sqlUbicacion);
+					stUb.setString(1, empresa.getUbicacion().getPais());
+					stUb.setString(2, empresa.getUbicacion().getProvincia());
+					stUb.setString(3, empresa.getUbicacion().getCiudad());
+					stUb.setString(4, empresa.getUbicacion().getDireccion());
+					if (stUb.executeUpdate() == 0) {
+						return;
+					}
 
-				System.out.println("DONE");
+					ResultSet ubRes = SQLConnection.sqlConnection.createStatement()
+							.executeQuery("SELECT ID FROM Ubicacion WHERE Pais = '" + empresa.getUbicacion().getPais()
+									+ "' AND Estado_Provincia = '" + empresa.getUbicacion().getProvincia() + "' AND Ciudad = '"
+									+ empresa.getUbicacion().getCiudad() + "' AND Direccion = '"
+									+ empresa.getUbicacion().getDireccion() + "'");
+
+					ubRes.next();
+					int ubId = ubRes.getInt("ID");
+
+
+					String sql = " insert into Empresa (RNC, NombreComercial, RazonSocial, Sector, CargoContacto, Tipo, Rubro, NombreContacto, TelefonoContacto, EmailContacto, Ubicacion_id)"
+							+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+					PreparedStatement st = SQLConnection.sqlConnection.prepareStatement(sql);
+					st.setString(1, empresa.getRNC());
+					st.setString(2, empresa.getNombreComercial());
+					st.setString(3, empresa.getRazonSocial());
+					st.setString(4, empresa.getSector());
+					st.setString(5, empresa.getCargoContacto());
+					st.setString(6, empresa.getTipo());
+					st.setString(7, empresa.getRubro());
+					st.setString(8, empresa.getNombreContacto());
+					st.setString(9, empresa.getTelefonoContacto());
+					st.setString(10, empresa.getEmailContacto());
+					st.setInt(11, ubId);
+
+					st.execute();
+
+					System.out.println("DONE");
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
