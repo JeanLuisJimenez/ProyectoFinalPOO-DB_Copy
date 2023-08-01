@@ -74,13 +74,12 @@ public class ListarEmpresas extends JDialog {
 							int index = tablaEmpresas.getSelectedRow();
 							if(index >= 0) {
 								String codigoString = tablaEmpresas.getValueAt(index, 0).toString();
-								ArrayList<Empresa> result = BolsaTrabajo.getInstance().getEmpresasByID(codigoString);
-								if(result.size() != 0) {
-									selectedEmpresa = result.get(0);									
-									if(selectedEmpresa != null) {
-										setButtonsState(true);
-									}
+								selectedEmpresa = BolsaTrabajo.getInstance().buildEmpresa(codigoString);
+
+								if (selectedEmpresa != null) {
+									setButtonsState(true);
 								}
+
 							}
 						}
 					});
@@ -121,7 +120,7 @@ public class ListarEmpresas extends JDialog {
 			btnReset.setEnabled(false);
 			btnReset.setBounds(658, 17, 211, 23);
 			panelFilter.add(btnReset);
-			
+
 			btnFilter.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if(Utils.isMaskCedulaDefaultValue(txtRNC.getText())) {
@@ -190,7 +189,7 @@ public class ListarEmpresas extends JDialog {
 		btnVerDetalles.setEnabled(false);
 		btnVerDetalles.setBounds(405, 5, 143, 23);
 		buttonPane.add(btnVerDetalles);
-		
+
 		btnModificar = new JButton("Modificar");
 		btnModificar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -223,7 +222,7 @@ public class ListarEmpresas extends JDialog {
 			addRowDataEmpresa(e1);
 		}
 	}
-	
+
 	private void addRowDataEmpresa(Empresa empresa) {
 		row = new Object[model.getColumnCount()];
 		row[0] = empresa.getRNC();
@@ -240,6 +239,6 @@ public class ListarEmpresas extends JDialog {
 		btnVerSolicitudes.setEnabled(isEnabled);
 		btnVerDetalles.setEnabled(isEnabled);
 		btnModificar.setEnabled(isEnabled);
-		
+
 	}
 }
