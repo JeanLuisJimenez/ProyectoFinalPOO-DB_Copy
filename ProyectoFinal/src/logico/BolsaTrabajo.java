@@ -774,7 +774,7 @@ public class BolsaTrabajo implements Serializable {
 				empresa =  new Empresa(emp.getString("RNC"), emp.getString("NombreComercial"), emp.getString("RazonSocial"), 
 						emp.getString("Rubro"), emp.getString("CargoContacto"), emp.getString("NombreContacto"),
 						emp.getString("TelefonoContacto"), emp.getString("EmailContacto"), emp.getString("Sector"), 
-						emp.getString("Tipo"), buildUbicacion(emp.getInt("Direccion")));
+						emp.getString("Tipo"), buildUbicacion(emp.getInt("Ubicacion_id")));
 			}	
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

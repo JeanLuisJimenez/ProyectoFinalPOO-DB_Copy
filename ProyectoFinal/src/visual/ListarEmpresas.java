@@ -17,6 +17,8 @@ import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -113,7 +115,7 @@ public class ListarEmpresas extends JDialog {
 			btnReset.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					txtRNC.setText("");
-					loadRowsInTable(BolsaTrabajo.getInstance().getEmpresasByID(""), null);
+					loadRowsInTable(BolsaTrabajo.getInstance().getEmpresaByID(""), null);
 					btnReset.setEnabled(false);
 				}
 			});
@@ -127,11 +129,16 @@ public class ListarEmpresas extends JDialog {
 						JOptionPane.showMessageDialog(null, "Tiene que completar la c\u00e9dula.", "Advertencia", JOptionPane.WARNING_MESSAGE);
 					}
 					else {			
-						ArrayList<Empresa> resultado = BolsaTrabajo.getInstance().getEmpresasByID(txtRNC.getText());
+						/*ArrayList<Empresa> resultado = BolsaTrabajo.getInstance().getEmpresasByID(txtRNC.getText());
 						if(resultado.size() > 0) {
 							Empresa e1 =  resultado.get(0);
 							loadRowsInTable(null,e1);
-							btnReset.setEnabled(true);
+							btnReset.setEnabled(true);*/
+							
+							Empresa resultado = BolsaTrabajo.getInstance().buildEmpresa(txtRNC.getText());
+							if (resultado != null) {
+								loadRowsInTable(null, resultado);
+								btnReset.setEnabled(true);
 						}
 						else {
 							JOptionPane.showMessageDialog(null, "Esta empresa no existe", "Error", JOptionPane.ERROR_MESSAGE);
@@ -196,7 +203,7 @@ public class ListarEmpresas extends JDialog {
 				if(selectedEmpresa != null) {
 					RegEmpresa empresa = new RegEmpresa(selectedEmpresa);
 					empresa.setVisible(true);
-					loadRowsInTable(BolsaTrabajo.getInstance().getEmpresasByID(""), null);
+					loadRowsInTable(BolsaTrabajo.getInstance().getEmpresaByID(""), null);
 					setButtonsState(false);
 					selectedEmpresa = null;
 				}
@@ -206,11 +213,11 @@ public class ListarEmpresas extends JDialog {
 		btnModificar.setBounds(306, 5, 89, 23);
 		buttonPane.add(btnModificar);
 
-		loadRowsInTable(BolsaTrabajo.getInstance().getEmpresasByID(""), null);
+		loadRowsInTable(BolsaTrabajo.getInstance().getEmpresaByID(""), null);
 	}
 
 	// Cargar datos a la tabla
-	private void loadRowsInTable(ArrayList<Empresa> empresas, Empresa e1) {
+	/*private void loadRowsInTable(ArrayList<Empresa> empresas, Empresa e1) {
 		row = new Object[model.getColumnCount()];
 		model.setRowCount(0);
 		if(e1 == null) {
@@ -221,7 +228,25 @@ public class ListarEmpresas extends JDialog {
 		else {
 			addRowDataEmpresa(e1);
 		}
+	}*/
+	
+	private void loadRowsInTable(ResultSet resultSet, Empresa e1) {
+		row = new Object[model.getColumnCount()];
+		model.setRowCount(0);
+		try {
+			if (e1 == null) {
+				while (resultSet.next()) {
+						addRowDataEmpresa(BolsaTrabajo.getInstance().buildEmpresa(resultSet.getString("RNC")));
+				}
+			} else {
+				addRowDataEmpresa(e1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
+
 
 	private void addRowDataEmpresa(Empresa empresa) {
 		row = new Object[model.getColumnCount()];
@@ -233,6 +258,8 @@ public class ListarEmpresas extends JDialog {
 		row[5] = empresa.getUbicacion().toString();
 		model.addRow(row);
 	}
+	
+	
 
 	// Cambiar el estado de los botones de solicitudes
 	private void setButtonsState(boolean isEnabled) {
