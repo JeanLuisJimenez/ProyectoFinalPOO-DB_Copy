@@ -234,13 +234,47 @@ public class BolsaTrabajo implements Serializable {
 				empresas.stream().filter(empresa -> empresa.getRNC().contains(RNC)).collect(Collectors.toList()));
 	}
 
-	public void agregarSolicitudEmpresa(String RNC, SolicitudEmpresa solicitud) {
-		ArrayList<Empresa> empresasAux = getEmpresasByID(RNC);
+	public void agregarSolicitudEmpresa(String RNC, SolicitudEmpresa solicitud) throws SQLException {
+	    ArrayList<Empresa> empresasAux = getEmpresasByID(RNC);
 
-		if (empresasAux.size() == 1) {
-			empresasAux.get(0).agregarSolicitud(solicitud);
-			solicitudesEmpresa.add(solicitud);
-		}
+	    if (empresasAux.size() == 1) {
+	        Empresa empresa = empresasAux.get(0);
+	        empresa.agregarSolicitud(solicitud);
+	        solicitudesEmpresa.add(solicitud);
+
+	        try {
+	            String sql = "INSERT INTO SolicitudEmpresa (id, fecha, cantidadPlazasNecesarias, estado, tipoPersonalSolicitado, sexo, RNCEmpresa, salarioMax, salarioMin, edad, agnosExperiencia, disponibilidadSalirCiudad, disponibilidadCambioResidencia, tipoDeTrabajo, esCasado, carrera, universidad, areaTecnica, porcentajeMatchRequerido, nacionalidad) "
+	                       + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	            PreparedStatement st = SQLConnection.sqlConnection.prepareStatement(sql);
+	            st.setString(1, solicitud.getId());
+	            st.setDate(2, new java.sql.Date(solicitud.getFecha().getTime()));
+	            st.setInt(3, solicitud.getCantidadPlazasNecesarias());
+	            st.setString(4, solicitud.getEstado().toString());
+	            st.setString(5, solicitud.getTipoPersonalSolicitado());
+	            st.setString(6, solicitud.getSexo());
+	            st.setString(7, solicitud.getRNCEmpresa());
+	            st.setFloat(8, solicitud.getSalarioMax());
+	            st.setFloat(9, solicitud.getSalarioMin());
+	            st.setInt(10, solicitud.getEdad());
+	            st.setInt(11, solicitud.getAgnosExperiencia());
+	            st.setBoolean(12, solicitud.isDisponibilidadSalirCiudad());
+	            st.setBoolean(13, solicitud.isDisponibilidadCambioResidencia());
+	            st.setString(14, solicitud.getTipoDeTrabajo());
+	            st.setBoolean(15, solicitud.isEsCasado());
+	            st.setString(16, solicitud.getCarrera());
+	            st.setString(17, solicitud.getUniversidad());
+	            st.setString(18, solicitud.getAreaTecnica());
+	            st.setFloat(19, solicitud.getPorcentajeMatchRequerido());
+	            st.setString(20, solicitud.getNacionalidad());
+
+	            st.executeUpdate();
+	            st.close();
+
+	            System.out.println("Solicitud guardada con exito.");
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+	    }
 	}
 
 	public void agregarSolicitudEmpleado(String cedula, SolicitudPersonal solicitud) {
