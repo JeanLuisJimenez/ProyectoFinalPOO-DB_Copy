@@ -55,7 +55,7 @@ public class BolsaTrabajo implements Serializable {
 		if (nombreEmpresa.isEmpty()) {
 			result = st.executeQuery("SELECT *FROM Empresa");
 		} else {
-			result = st.executeQuery("SELECT *FROM Empresa WHERE nombreEmpresa LIKE '%" + nombreEmpresa +"%'");
+			result = st.executeQuery("SELECT *FROM Empresa WHERE NombreComercial LIKE '%" + nombreEmpresa +"%'");
 		}
 		return result;
 	}
