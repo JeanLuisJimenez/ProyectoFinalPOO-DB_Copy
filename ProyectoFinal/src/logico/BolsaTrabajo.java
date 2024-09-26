@@ -273,26 +273,122 @@ public class BolsaTrabajo implements Serializable {
 	}
 
 	public void agregarSolicitudEmpresa(String RNC, SolicitudEmpresa solicitud) {
-		ArrayList<Empresa> empresasAux = getEmpresasByID(RNC);
+	    try {
+	        ArrayList<Empresa> empresasAux = getEmpresasByID(RNC);
+	        if (empresasAux.size() == 1) {
+	            // Obtener IDs de Universidad, Carrera y AreaTecnica
+	            int universidadId = -1;
+	            int carreraId = -1;
+	            int areaTecnicaId = -1;
 
-		if (empresasAux.size() == 1) {
-			empresasAux.get(0).agregarSolicitud(solicitud);
-			solicitudesEmpresa.add(solicitud);
-		}
+	            if (solicitud.getTipoPersonalSolicitado().equalsIgnoreCase("Universitario")) {
+	                universidadId = agregarOpcion(solicitud.getUniversidad(), "Universidad");
+	                carreraId = agregarOpcion(solicitud.getCarrera(), "Carrera");
+	            } else if (solicitud.getTipoPersonalSolicitado().equalsIgnoreCase("Tecnico")) {
+	                areaTecnicaId = agregarOpcion(solicitud.getAreaTecnica(), "AreaTecnica");
+	            }
+
+	            String sql = "INSERT INTO SolicitudEmpresa (ID, FechaCreacion, CantidadPlazas, Estado, TipoPersonal, Genero, RNCEmpresa, SalarioMax, SalarioMin, Edad, agnosExperiencia, DispRelocalizacion, DispSalirCiudad, TipoTrabajo, Casado, PorcentajeMatchRequerido, Nacionalidad, Universidad_id, Carrera_id, AreaTecnica_id) " +
+	                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	            PreparedStatement st = SQLConnection.sqlConnection.prepareStatement(sql);
+	            st.setString(1, solicitud.getId());
+	            st.setDate(2, new Date(solicitud.getFecha().getTime()));
+	            st.setInt(3, solicitud.getCantidadPlazasNecesarias());
+	            st.setInt(4, solicitud.getEstado().ordinal());
+	            st.setString(5, solicitud.getTipoPersonalSolicitado());
+	            st.setString(6, solicitud.getSexo());
+	            st.setString(7, RNC);
+	            st.setFloat(8, solicitud.getSalarioMax());
+	            st.setFloat(9, solicitud.getSalarioMin());
+	            st.setInt(10, solicitud.getEdad());
+	            st.setInt(11, solicitud.getAgnosExperiencia());
+	            st.setBoolean(12, solicitud.isDisponibilidadCambioResidencia());
+	            st.setBoolean(13, solicitud.isDisponibilidadSalirCiudad());
+	            st.setString(14, solicitud.getTipoDeTrabajo());
+	            st.setBoolean(15, solicitud.isEsCasado());
+	            st.setFloat(16, solicitud.getPorcentajeMatchRequerido());
+	            st.setString(17, solicitud.getNacionalidad());
+	            st.setInt(18, universidadId);
+	            st.setInt(19, carreraId);
+	            st.setInt(20, areaTecnicaId);
+	            st.executeUpdate();
+	        }
+	        System.out.println("DONE");
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
 	}
 
+	private int insertarUbicacion(Ubicacion ubicacion) throws SQLException {
+	    String sqlUbicacion = "INSERT INTO Ubicacion (Pais, Estado_Provincia, Ciudad, Direccion) VALUES (?, ?, ?, ?)";
+	    PreparedStatement stUb = SQLConnection.sqlConnection.prepareStatement(sqlUbicacion);
+	    stUb.setString(1, ubicacion.getPais());
+	    stUb.setString(2, ubicacion.getProvincia());
+	    stUb.setString(3, ubicacion.getCiudad());
+	    stUb.setString(4, ubicacion.getDireccion());
+	    stUb.executeUpdate();
+
+	    ResultSet ubRes = SQLConnection.sqlConnection.createStatement().executeQuery("SELECT ID FROM Ubicacion WHERE Pais = '"
+	            + ubicacion.getPais() + "' AND Estado_Provincia = '" + ubicacion.getProvincia() + "' AND Ciudad = '"
+	            + ubicacion.getCiudad() + "' AND Direccion = '" + ubicacion.getDireccion() + "'");
+	    ubRes.next();
+	    return ubRes.getInt("ID");
+	}
+
+	private int insertarOpcion(String nombre, String tabla) throws SQLException {
+	    String sqlOpcion = "INSERT INTO " + tabla + " (Nombre) VALUES (?)";
+	    PreparedStatement stOpcion = SQLConnection.sqlConnection.prepareStatement(sqlOpcion);
+	    stOpcion.setString(1, nombre);
+	    stOpcion.executeUpdate();
+
+	    ResultSet opcionRes = SQLConnection.sqlConnection.createStatement()
+	            .executeQuery("SELECT ID FROM " + tabla + " WHERE Nombre = '" + nombre + "'");
+	    opcionRes.next();
+	    return opcionRes.getInt("ID");
+	}
+
+
 	public void agregarSolicitudEmpleado(String cedula, SolicitudPersonal solicitud) {
-		ResultSet personalAux = getPersonalByID(cedula);
-		try {
-			personalAux.next();
-			if (personalAux.isLast() && getSolicitudesPersonalByID(solicitud.getId()).isEmpty()
-					&& personalAux.getString("EmpresaContratacion") == null) {
-				solicitudesPersonal.add(solicitud);
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	    try {
+	        ResultSet personalAux = getPersonalByID(cedula);
+	        if (personalAux.next() && getSolicitudesPersonalByID(solicitud.getId()).isEmpty() &&
+	                personalAux.getString("EmpresaContratacion") == null) {
+
+	            // Obtener IDs de Universidad, Carrera y AreaTecnica
+	            int universidadId = -1;
+	            int carreraId = -1;
+	            int areaTecnicaId = -1;
+
+	            if (solicitud.getTipoPersonal().equalsIgnoreCase("Universitario")) {
+	                universidadId = agregarOpcion(solicitud.getUniversidad(), "Universidad");
+	                carreraId = agregarOpcion(solicitud.getCarrera(), "Carrera");
+	            } else if (solicitud.getTipoPersonal().equalsIgnoreCase("Tecnico")) {
+	                areaTecnicaId = agregarOpcion(solicitud.getAreaTecnica(), "AreaTecnica");
+	            }
+
+	            String sql = "INSERT INTO SolicitudPersonal (ID, Fecha, CedulaPersonal, Descripcion, SalarioEsperado, agnosExperiencia, TipoPersonal, DispRelocalizacion, DispSalirCiudad, ModalidadTrabajo, Estado, Universidad_id, Carrera_id, AreaTecnica_id) " +
+	                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	            PreparedStatement st = SQLConnection.sqlConnection.prepareStatement(sql);
+	            st.setString(1, solicitud.getId());
+	            st.setDate(2, new Date(solicitud.getFecha().getTime()));
+	            st.setString(3, solicitud.getCedulaPersonal());
+	            st.setString(4, solicitud.getDescripcion());
+	            st.setFloat(5, solicitud.getSalarioEsperado());
+	            st.setInt(6, solicitud.getAgnosExperiencia());
+	            st.setString(7, solicitud.getTipoPersonal());
+	            st.setBoolean(8, solicitud.isDisponibilidadCambioResidencia());
+	            st.setBoolean(9, solicitud.isDisponibilidadSalirCiudad());
+	            st.setString(10, solicitud.getModalidadDeTrabajo());
+	            st.setInt(11, solicitud.getEstado().ordinal());
+	            st.setInt(12, universidadId);
+	            st.setInt(13, carreraId);
+	            st.setInt(14, areaTecnicaId);
+	            st.executeUpdate();
+	        }
+	        System.out.println("DONE");
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
 	}
 
 	public ArrayList<SolicitudEmpresa> getSolicitudesEmpresaByID(String filterID) {
